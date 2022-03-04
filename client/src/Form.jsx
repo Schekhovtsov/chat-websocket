@@ -14,10 +14,18 @@ const Form = () => {
         socket.current.onopen = () => {
             setConnected(true);
             console.log('Connection is established')
+            const message = {
+                username,
+                message: value,
+                id: Date.now(),
+                event: 'connection'
+            };
+            socket.current.send(JSON.stringify(message));
         }
 
-        socket.current.onmessage = () => {
-
+        socket.current.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            setMessages(prev => [...prev, message]);
         }
 
         socket.current.onclose = () => {
@@ -29,27 +37,27 @@ const Form = () => {
         }
     }
 
-    // const sendMessage = async () => {
-    //     const message = {
-    //         username,
-    //         message: value,
-    //         id: Date.now(),
-    //         event: 'message'
-    //     }
-    //     socket.current.send(JSON.stringify(message));
-    //     setValue('')
-    // }
+    const sendMessage = async () => {
+        const message = {
+            username,
+            message: value,
+            id: Date.now(),
+            event: 'message'
+        }
+        socket.current.send(JSON.stringify(message));
+        setValue('')
+    }
 
     if (!connected) {
         return (
             <div>
-                Connection is not established
-                <div className="form">
+                Войдите для отправки сообщений
+                <div className='form'>
                     <div>
                         <input value={username}
                                onChange={e => setUsername(e.target.value)}
-                               type="text"
-                               placeholder="Введите имя пользователя"
+                               type='text'
+                               placeholder='Введите имя пользователя'
                         />
                     </div>
                     <div>
@@ -62,7 +70,27 @@ const Form = () => {
 
     return (
         <div>
-            OK
+            <div className='form'>
+                Привет, {username}
+                <div>
+                    <input value={value}
+                           onChange={e => setValue(e.target.value)}
+                           type='text'
+                           placeholder='Введите сообщение'
+                    />
+                </div>
+                <div>
+                    <button onClick={sendMessage}>Отправить</button>
+                </div>
+                <div className='messages'>
+                    {messages.map(msg => <div key={msg.id}>
+                        { msg.event === 'connection'
+                            ? <div><em>Пользователь <strong>{msg.username}</strong> подключился</em></div>
+                            : <div><strong>{msg.username}</strong>: {msg.message}</div>
+                        }
+                    </div>)}
+                </div>
+            </div>
         </div>
     );
 };
